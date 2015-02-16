@@ -1,0 +1,27 @@
+{
+  "name": "mynosql",
+  "description": "",
+  "version": "0.0.0",
+  "homepage": "https://github.com/dominictarr/mynosql",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dominictarr/mynosql.git"
+  },
+  "dependencies": {
+    "pull-stream": "~2.26.0",
+    "pull-level": "~1.2.0",
+    "pull-defer": "~0.1.1"
+  },
+  "devDependencies": {
+    "tape": "~3.5.0",
+    "level-sublevel": "~6.4.5",
+    "level": "~0.18.0",
+    "JSONStream": "~0.10.0"
+  },
+  "scripts": {
+    "prepublish": "npm ls &&  npm test",
+    "test": "set -e; for t in test/*.js; do node $t; done"
+  },
+  "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://dominictarr.com)",
+  "license": "MIT"
+}

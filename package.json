@@ -10,13 +10,16 @@
   "dependencies": {
     "pull-stream": "~2.26.0",
     "pull-level": "~1.2.0",
-    "pull-defer": "~0.1.1"
+    "pull-defer": "~0.1.1",
+    "monotonic-timestamp": "~0.0.9",
+    "pull-paramap": "~1.1.1"
   },
   "devDependencies": {
     "tape": "~3.5.0",
     "level-sublevel": "~6.4.5",
     "level": "~0.18.0",
-    "JSONStream": "~0.10.0"
+    "JSONStream": "~0.10.0",
+    "pull-fs": "~1.1.4"
   },
   "scripts": {
     "prepublish": "npm ls &&  npm test",

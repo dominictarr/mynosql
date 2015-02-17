@@ -112,10 +112,12 @@ module.exports = function (_db) {
             prefix: db.sublevel('meta'), type: 'put'
           })
         })
-        batch.forEach(function (e) { console.log(e.key, e.value) })
         db.sublevel('idx').batch(batch, function (err) {
           if(err) return cb(err)
-          addTo(indexes, paths); cb()
+          paths.forEach(function (path) {
+            indexes.push({path: path, since: maxTs})
+          })
+          cb()
         })
       })
     )

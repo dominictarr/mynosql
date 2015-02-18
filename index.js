@@ -192,7 +192,6 @@ module.exports = function (_db) {
     init(function () {
       var opts = getQueryIndex(query)
       var filter = createFilter(query)
-      console.log('QUERY', opts)
       stream.resolve(
           opts
         //Query using the best index.

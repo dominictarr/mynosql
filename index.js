@@ -6,6 +6,8 @@ var paramap   = require('pull-paramap')
 var timestamp = require('monotonic-timestamp')
 var defer     = require('pull-defer')
 
+var cont      = require('cont')
+
 var createFilter = require('./filter')
 var createInit = require('./init')
 var pathTo = require('./path')
@@ -18,11 +20,8 @@ var isArray = Array.isArray
 
 function find (ary, test) {
   for(var i = 0; i < ary.length; i++)
-    if(test(ary[i])) return ary[i]
+    if(test(ary[i], i, ary)) return ary[i]
 }
-
-var LO = null
-var HI = undefined
 
 module.exports = function (_db) {
 
@@ -46,6 +45,9 @@ module.exports = function (_db) {
   db.scan = function (opts) {
     return pull(
       pl.read(logDb),
+      //filter by unique is a hack. would rather make sure
+      //that things where not added twice...
+      pull.unique('value'),
       paramap(function (data, cb) {
         db.get(data.value, function (err, value) {
           cb(null, {key: data.value, value: value, ts: data.key})
@@ -82,7 +84,7 @@ module.exports = function (_db) {
   // for a set of paths into the database,
   // create indexes for those values.
 
-  var indexes = []
+  db.indexes = []
 
   db.createIndex = function (path, cb) {
     return db.createIndexes([path], cb)
@@ -115,7 +117,7 @@ module.exports = function (_db) {
         db.sublevel('idx').batch(batch, function (err) {
           if(err) return cb(err)
           paths.forEach(function (path) {
-            indexes.push({path: path, since: maxTs})
+            db.indexes.push({path: path, since: maxTs})
           })
           cb()
         })
@@ -130,7 +132,7 @@ module.exports = function (_db) {
   //load the index table into memory...
 
   db.pre(function (data, add) {
-    indexes.forEach(function (path) {
+    db.indexes.forEach(function (path) {
       add({
         key: [path, pathTo(path, data.value), data.key],
         value: '', type: 'put', prefix: db.sublevel('idx')
@@ -142,71 +144,31 @@ module.exports = function (_db) {
     pull(
       pl.read(db.sublevel('meta')),
       pull.drain(function (op) {
-        indexes.push({
+        db.indexes.push({
           path: op.key, since: op.since
         })
       }, cb)
     )
   })
 
-  //move this out and have multiple query strategies
-  function getQueryIndex (query) {
-    //choose the most indexable parameter
-    //use eq instead of a range.
-    var index = indexes.filter(function (e) {
-      if(!e) return
-      var str = ''+e.path
-      return find(query, function (q) {
-        return q.path == str
-      })
-    }).shift()
+  var strategies = [
+    require('./query/filtered-index'),
+    require('./query/scan')
+  ]
 
-    console.log(index)
-
-    if(!index) return
-
-    var q = find(query, function (e) {
-      return e.path == ''+index.path
+  db.plan = cont(function (query, cb) {
+    if(!isArray(query)) query = [query]
+    init(function () {
+      cb(null, strategies.map(function (strategy) {
+        return strategy(db, query)
+      }))
     })
-
-    var opts
-
-    if(q.eq)
-      opts = {gte: [q.path, q.eq, LO], lte: [q.path, q.eq, HI]}
-    else {
-      opts = {}
-      if(q.gte) opts.gte = [q.path, q.gte, LO]
-      if(q.gt)  opts.gt  = [q.path, q.gt,  LO]
-      if(q.lte) opts.lte = [q.path, q.lte, HI]
-      if(q.lt)  opts.lt  = [q.path, q.lt,  HI]
-    }
-
-    opts.values = false
-
-    return opts
-  }
+  })
 
   db.query = function (query) {
-    if(!isArray(query)) query = [query]
     var stream = defer.source()
-    init(function () {
-      var opts = getQueryIndex(query)
-      var filter = createFilter(query)
-      stream.resolve(
-          opts
-        //Query using the best index.
-        ? pull(
-            pl.read(db.sublevel('idx'), opts),
-            paramap(function (key, cb) {
-              db.get(key[2], function (err, value) {
-                cb(null, value )
-              })
-            }),
-            pull.filter(filter)
-          )
-        //full table scan...
-        : pull(db.scan(), pull.filter(filter))
-      )
+    db.plan(query, function (err, plans) {
+      stream.resolve(plans.filter(Boolean).shift().exec())
     })
     return stream
   }

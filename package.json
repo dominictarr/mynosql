@@ -12,7 +12,8 @@
     "pull-level": "~1.2.0",
     "pull-defer": "~0.1.1",
     "monotonic-timestamp": "~0.0.9",
-    "pull-paramap": "~1.1.1"
+    "pull-paramap": "~1.1.1",
+    "cont": "~1.0.1"
   },
   "devDependencies": {
     "tape": "~3.5.0",

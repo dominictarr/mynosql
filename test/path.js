@@ -1,6 +1,6 @@
 
 var tape = require('tape')
-var path = require('../path')
+var path = require('../util').path
 
 tape('match paths', function (t) {
 

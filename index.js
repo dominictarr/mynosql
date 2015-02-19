@@ -8,9 +8,7 @@ var defer     = require('pull-defer')
 
 var cont      = require('cont')
 
-var createFilter = require('./filter')
-var createInit = require('./init')
-var pathTo = require('./path')
+var util = require('./util')
 
 function addTo(aryTo, aryFrom) {
   aryFrom.forEach(function (e) { aryTo.push(e) })
@@ -100,7 +98,7 @@ module.exports = function (_db) {
       pull.drain(function (data) {
         maxTs = Math.max(data.ts, maxTs)
         paths.forEach(function (path) {
-          var value = pathTo(path, data.value)
+          var value = util.path(path, data.value)
           if(value !== undefined)
             batch.push({
               key: [path, value, data.key], value: '', type: 'put'
@@ -140,7 +138,7 @@ module.exports = function (_db) {
     })
   })
 
-  var init = createInit(function (cb) {
+  var init = util.createInit(function (cb) {
     pull(
       pl.read(db.sublevel('meta')),
       pull.drain(function (op) {

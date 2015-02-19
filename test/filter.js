@@ -1,7 +1,7 @@
 
 var tape = require('tape')
 
-var filter = require('../filter')
+var filter = require('../util').createFilter
 
 
 tape('simple', function (t) {

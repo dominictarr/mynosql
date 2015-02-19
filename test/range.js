@@ -1,6 +1,6 @@
 var tape = require('tape')
 
-var range = require('../range')
+var range = require('../util').range
 
 
 tape('test range', function (t) {

@@ -1,5 +1,5 @@
 
-var createFilter = require('../filter')
+var createFilter = require('../util').createFilter
 var pull = require('pull-stream')
 
 module.exports = function (db, query) {

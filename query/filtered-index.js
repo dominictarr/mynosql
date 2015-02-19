@@ -1,4 +1,4 @@
-var createFilter = require('../filter')
+var util = require('../util')
 var pl = require('pull-level')
 var pull = require('pull-stream')
 var paramap = require('pull-paramap')
@@ -6,25 +6,20 @@ var paramap = require('pull-paramap')
 var LO = null
 var HI = undefined
 
-function find (ary, test) {
-  for(var i = 0; i < ary.length; i++)
-    if(test(ary[i], i, ary)) return ary[i]
-}
-
 module.exports = function (db, query) {
   //choose the most indexable parameter
   //use eq instead of a range.
   var index = db.indexes.filter(function (e) {
     if(!e) return
     var str = ''+e.path
-    return find(query, function (q) {
+    return util.find(query, function (q) {
       return q.path == str
     })
   }).shift()
 
   if(!index) return
 
-  var q = find(query, function (e) {
+  var q = util.find(query, function (e) {
     return e.path == ''+index.path
   })
 
@@ -46,7 +41,7 @@ module.exports = function (db, query) {
     opts: opts,
     query: query,
     exec: function () {
-      var filter = createFilter(query)
+      var filter = util.createFilter(query)
 
       return pull(
         pl.read(db.sublevel('idx'), opts),

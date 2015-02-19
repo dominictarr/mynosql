@@ -4,7 +4,7 @@ function has (obj, prop) {
   return Object.hasOwnProperty.call(obj, prop)
 }
 
-function isString(s) {
+var isString = exports.isString = function (s) {
   return 'string' === typeof s
 }
 

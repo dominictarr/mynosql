@@ -1,6 +1,6 @@
 
 
-function has (obj, prop) {
+var has = exports.has = function (obj, prop) {
   return Object.hasOwnProperty.call(obj, prop)
 }
 
@@ -13,6 +13,12 @@ var find = exports.find = function (ary, test) {
     if(test(ary[i], i, ary)) return ary[i]
 }
 
+var first = exports.first = function (ary, map) {
+  for(var i = 0; i < ary.length; i++) {
+    var v = map(ary[i], i, ary)
+    if(v) return v
+  }
+}
 
 var path = exports.path = function (path, obj) {
 

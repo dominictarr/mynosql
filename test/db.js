@@ -54,8 +54,7 @@ tape('full scan', function (t) {
         t.ok(pkg.value.version < '1.0.0')
       })
 
-
-      db.createIndex(['version'], function (err) {
+      db.createIndex([['version']], function (err) {
         pull(
           require('../query/filtered-index')(db, query).exec(),
           pull.collect(function (err, ary) {
@@ -75,11 +74,12 @@ tape('full scan', function (t) {
             function min (e) {
               return [e.key, e.value.name, e.value.version]
             }
+
             t.deepEqual(ary.map(min), fullScanAry.map(min))
 
-            t.deepEqual(ary, fullScanAry.map(function (e) {
+            t.deepEqual(ary.slice(0, 3), fullScanAry.map(function (e) {
               delete e.ts; return e
-            }))
+            }).slice(0, 3))
 
             t.end()
           })
@@ -89,5 +89,30 @@ tape('full scan', function (t) {
 
     })
   )
+
+})
+
+tape('indexes', function (t) {
+
+  t.deepEqual(db.indexes.map(function (e) { return e.path }), [
+    [['version']]
+  ])
+
+  db.createIndex([['name'], ['version']], function (err) {
+    pull(
+      pl.read(db.sublevel('idx'), {
+        values: false,
+        gte: [['name'], undefined],
+        lte: [['name'], null]
+      }),
+      pull.through(function (key) {
+        t.deepEqual(key[0], [[['name'], ['version']]])
+        t.ok(key[1].length, 2)
+        t.ok('string' === typeof key[2])
+        console.log(JSON.stringify(key))
+      }),
+      pull.drain(null, t.end)
+    )
+  })
 
 })

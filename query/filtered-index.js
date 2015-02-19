@@ -26,13 +26,13 @@ module.exports = function (db, query) {
   var opts
 
   if(q.eq)
-    opts = {gte: [q.path, q.eq, LO], lte: [q.path, q.eq, HI]}
+    opts = {gte: [[q.path], [q.eq], LO], lte: [[q.path], [q.eq], HI]}
   else {
     opts = {}
-    if(q.gte) opts.gte = [q.path, q.gte, LO]
-    if(q.gt)  opts.gt  = [q.path, q.gt,  LO]
-    if(q.lte) opts.lte = [q.path, q.lte, HI]
-    if(q.lt)  opts.lt  = [q.path, q.lt,  HI]
+    if(q.gte) opts.gte = [[q.path], [q.gte], LO]
+    if(q.gt)  opts.gt  = [[q.path], [q.gt],  LO]
+    if(q.lte) opts.lte = [[q.path], [q.lte], HI]
+    if(q.lt)  opts.lt  = [[q.path], [q.lt],  HI]
   }
 
   opts.values = false

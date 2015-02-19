@@ -21,6 +21,10 @@ function find (ary, test) {
     if(test(ary[i], i, ary)) return ary[i]
 }
 
+function isUndef (u) {
+  return 'undefined' === typeof u
+}
+
 module.exports = function (_db) {
 
   var db = sublevel(_db)
@@ -71,10 +75,10 @@ module.exports = function (_db) {
       while(waiting.length) waiting.shift()()
   })
 
-  db.drain = function (cb) {
+  db.drain = cont(function (cb) {
     if(landed === inflight) cb()
     else waiting.shift(cb)
-  }
+  })
 
   // ************************************
   // Index Creation
@@ -84,11 +88,11 @@ module.exports = function (_db) {
 
   db.indexes = []
 
-  db.createIndex = function (path, cb) {
+  db.createIndex = cont(function (path, cb) {
     return db.createIndexes([path], cb)
-  }
+  })
 
-  db.createIndexes = function (paths, cb) {
+  db.createIndexes = cont(function (paths, cb) {
     if(!cb) throw new Error('mynosql.createIndexes: must provide callback')
 
     var batch = [], maxTs = 0
@@ -97,11 +101,14 @@ module.exports = function (_db) {
       db.scan(),
       pull.drain(function (data) {
         maxTs = Math.max(data.ts, maxTs)
-        paths.forEach(function (path) {
-          var value = util.path(path, data.value)
-          if(value !== undefined)
+        paths.forEach(function (paths) {
+          if(util.isString(paths[0])) paths = [paths]
+          var values = paths.map(function (path) {
+            return util.path(path, data.value)
+          })
+          if(!values.every(isUndef))
             batch.push({
-              key: [path, value, data.key], value: '', type: 'put'
+              key: [paths, values, data.key], value: '', type: 'put'
             })
         })
       },
@@ -121,7 +128,7 @@ module.exports = function (_db) {
         })
       })
     )
-  }
+  })
 
   // ************************************
   // Querying!

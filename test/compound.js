@@ -25,6 +25,7 @@ tape('plan query with compound index', function (t) {
       [[['name'], ['version']], ['mynosql', '1.0.0'], LO],
     lt:
       [[['name'], ['version']], ['mynosql', '2.0.0'], HI],
+    values: false
   })
 
   console.log(JSON.stringify(plan))

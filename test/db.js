@@ -33,10 +33,7 @@ tape('query dependency database', function (t) {
     }),
     pl.write(db, function (err) {
       if(err) throw err
-      console.log('written')
-
       t.end()
-
     })
   )
 
@@ -92,7 +89,7 @@ tape('full scan', function (t) {
 
 })
 
-tape('indexes', function (t) {
+tape('compound indexes', function (t) {
 
   t.deepEqual(db.indexes.map(function (e) { return e.path }), [
     [['version']]
@@ -111,7 +108,26 @@ tape('indexes', function (t) {
         t.ok('string' === typeof key[2])
         console.log(JSON.stringify(key))
       }),
-      pull.drain(null, t.end)
+      pull.drain(null, function (err) {
+
+        pull(
+          db.query([
+            {path: ['name'], eq: 'ltgt'},
+            {path: ['version'], gte: '2.0.0', lt: '3.0.0'}
+          ]),
+          pull.collect(function (err, ary) {
+            if(err) throw err
+            console.log(ary)
+            t.ok(ary.length >= 1)
+            ary.forEach(function (pkg) {
+              t.equal(pkg.value.name, 'ltgt')
+              t.ok(pkg.value.version >= '2.0.0')
+              t.ok(pkg.value.version < '3.0.0')
+            })
+            t.end()
+          })
+        )
+      })
     )
   })
 

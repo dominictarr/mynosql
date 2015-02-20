@@ -25,7 +25,7 @@ var db = mynosql(level(pathToDb, {encoding: 'json'}))
 db.put(...)
 
 //create an index for author name.
-db.createIndex(['author', 'name'], function () {
+db.createIndex([['author', 'name']], function () {
   //query an index with pull streams.
   //all records where doc.author.name === 'Dominic Tarr'
   pull(
@@ -36,6 +36,7 @@ db.createIndex(['author', 'name'], function () {
   )
 })
 ```
+
 
 ## api
 
@@ -69,7 +70,7 @@ var validQuery = [
 ]
 
 ```
-### createIndex (path); createIndexes (paths)
+### createIndex (paths); createIndexes (pathsArray)
 
 To make queries fast, indexes are necessary.
 An index is a ordered lookup that maps from the path into the value,
@@ -78,10 +79,15 @@ So to create an index, you must pass in a path into the records.
 This can then be used to read less data for queries involving that path,
 which means the query will not take as long.
 
+All indexes are expressed as compound indexes, so pass in an array of paths into your data.
+example, if you have data with a nest property `{author: {name: 'bob', email: 'bob@bob.io'}}`
+and you want to retrive records by `author.name`, create an index with
+the call `db.createIndex([['author', 'name']], cb)`
+
 `cb` is called when the index has been created. After this point,
 all new data added will also be indexed.
 
-Multilpe indexes can be created at once using `db.createIndexes`.
+Multiple indexes can be created at once using `db.createIndexes`.
 To create an index the entire database must be scanned,
 but this means at least it's only scanned once.
 
@@ -113,18 +119,18 @@ and then filter out records that do not match the other paths.
 If that subquery is an `eq` operator, then this may limit the data read
 significantly, And thus be a fairly optimizable query.
 
+#### Compound Index
+
+If a query has at least two parts, and at all but one of them uses `eq`
+operator, then you can look up that data using a single compound index.
+Creating a compound index is more expensive, but it is most optimal,
+and means filtering may be unnecessary.
+
 #### Merged Indexes (not yet implemented)
 
 For a two part query that has two available indexes,
 each index can be read and then merged. In some cases, this may
 read less data than Filtered Index strategy.
-
-#### Compound Index (not yet implemented)
-
-A multipart query may be optimized with a multipart index.
-This way, you can respond to the query by only reading a range
-from the index, instead of reading documents and then filtering them.
-
 
 ## License
 

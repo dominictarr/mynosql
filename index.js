@@ -157,9 +157,27 @@ module.exports = function (_db) {
   })
 
   var strategies = [
+    require('./query/compound-index'),
     require('./query/filtered-index'),
     require('./query/scan')
   ]
+
+  //read out of the index and lookup original,
+  //with optional filtering...
+
+  db.readIndex = function (opts, filter) {
+    return pull(
+      pl.read(db.sublevel('idx'), opts),
+      paramap(function (key, cb) {
+        db.get(key[2], function (err, value) {
+          cb(null, {key: key[2], value: value})
+        })
+      }),
+      filter ? pull.filter(function (data) {
+        return filter(data.value)
+      }) : null
+    )
+  }
 
   db.plan = cont(function (query, cb) {
     if(!isArray(query)) query = [query]

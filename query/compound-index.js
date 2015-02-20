@@ -1,3 +1,4 @@
+'use strict'
 var LO = null
 var HI = undefined
 var util = require('../util')
@@ -62,7 +63,7 @@ module.exports = function (db, query) {
       if(util.has(subquery, 'eq'))
         querypath[i] = subquery.eq
       else if(last)
-        opts = ltgt.toLtgt(subquery, {}, function (e, hi) {
+        opts = ltgt.toLtgt(subquery, {values: false}, function (e, hi) {
           return [index.path, querypath.concat(e), hi ? HI : LO]
         }, LO, HI)
       else
@@ -72,14 +73,18 @@ module.exports = function (db, query) {
     //if the query didn't end in a range...
     if(!opts)
       opts = {
+          values: false,
           gte: [index.path, querypath, LO],
           lte: [index.path, querypath, HI]
         }
 
-    return {opts: opts, index: index, exec: function () {
-        throw new Error('not implemented yet')
-      }}
-
+    return {
+      opts: opts,
+      index: index,
+      exec: function () {
+        return db.readIndex(opts, util.createFilter(query))
+      }
+    }
   })
 
 }

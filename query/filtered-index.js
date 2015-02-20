@@ -1,7 +1,5 @@
+'use strict'
 var util = require('../util')
-var pl = require('pull-level')
-var pull = require('pull-stream')
-var paramap = require('pull-paramap')
 
 var LO = null
 var HI = undefined
@@ -41,19 +39,7 @@ module.exports = function (db, query) {
     opts: opts,
     query: query,
     exec: function () {
-      var filter = util.createFilter(query)
-
-      return pull(
-        pl.read(db.sublevel('idx'), opts),
-        paramap(function (key, cb) {
-          db.get(key[2], function (err, value) {
-            cb(null, {key: key[2], value: value})
-          })
-        }),
-        pull.filter(function (data) {
-          return filter(data.value)
-        })
-      )
+      return db.readIndex(opts, util.createFilter(query))
     }
   }
 }

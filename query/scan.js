@@ -1,4 +1,4 @@
-
+'use strict'
 var createFilter = require('../util').createFilter
 var pull = require('pull-stream')
 

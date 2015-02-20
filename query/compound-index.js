@@ -62,8 +62,8 @@ module.exports = function (db, query) {
       if(util.has(subquery, 'eq'))
         querypath[i] = subquery.eq
       else if(last)
-        opts = ltgt.toLtgt(subquery, {}, function (e, low) {
-          return [index.path, querypath.concat(e), low ? LO : HI]
+        opts = ltgt.toLtgt(subquery, {}, function (e, hi) {
+          return [index.path, querypath.concat(e), hi ? HI : LO]
         }, LO, HI)
       else
         return false //couldn't use this index.

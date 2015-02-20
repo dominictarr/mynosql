@@ -1,6 +1,6 @@
 {
   "name": "mynosql",
-  "description": "",
+  "description": "structured queries for nosql",
   "version": "1.0.1",
   "homepage": "https://github.com/dominictarr/mynosql",
   "repository": {

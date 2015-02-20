@@ -1,5 +1,4 @@
-
-
+'use strict'
 var has = exports.has = function (obj, prop) {
   return Object.hasOwnProperty.call(obj, prop)
 }

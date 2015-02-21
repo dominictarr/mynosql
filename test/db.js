@@ -3,6 +3,7 @@ var level = require('level-test')()
 var tape = require('tape')
 
 var db = require('../')(level('test-mynosql', {encoding: 'json'}))
+var db2 = require('../')(level('test-mynosql2', {encoding: 'json'}))
 
 var pl   = require('pull-level')
 var pull = require('pull-stream')
@@ -154,12 +155,17 @@ tape('glob query for keyword.*', function (t) {
     console.log('FULL SCAN TIME', scantime)
     
     db.createIndex([['keywords', true]], function (err) {
-      var start = Date.now()
       all(pl.read(db.sublevel('idx'), {
         values: false,
-        gte: [['keyword', true], LO],
-        lte: [['keyword', true], HI]
+        gte: [[['keywords', true]], LO],
+        lte: [[['keywords', true]], HI]
       })) (function (err, ary) {
+        console.log('GLOB INDEX', ary.map(JSON.stringify))
+
+        return t.end()
+
+        t.ok(ary.length)
+        var start = Date.now()
         all(db.query([
           {path: ['keywords', true], eq: 'database'}
         ])) (function (err, ary) {
@@ -174,3 +180,24 @@ tape('glob query for keyword.*', function (t) {
   })
 })
 
+
+tape('build glob index in realtime', function (t) {
+
+  db2.createIndex([['keywords', true]], function (err) {
+    if(err) throw err
+    pull(
+      db.scan(),
+      pl.write(db2, function (err) {
+        all(pl.read(db.sublevel('idx'), {
+            values: false,
+            gte: [[['keywords', true]], LO],
+            lte: [[['keywords', true]], HI]
+          })) (function (err, ary) {
+            console.log(ary)
+            t.ok(ary.length, 'realtime index non-empty')
+            t.end()
+          })
+      })
+    )
+  })
+})

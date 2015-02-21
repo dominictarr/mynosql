@@ -68,8 +68,12 @@ var validQuery = [
   ... //multiple subqueries may be provided.
       //records returned will satisfy at all the queries.
 ]
-
 ```
+
+paths _may_ contain wildcards - currently only the simplest wildcard
+is supported (true) which matches every key. [JSONStream](https://github.com/dominictarr/JSONStream)
+is a popular module that behaves the same.
+
 ### createIndex (paths); createIndexes (pathsArray)
 
 To make queries fast, indexes are necessary.
@@ -97,6 +101,16 @@ db.createIndex(['author', 'name'], cb)
 
 //create multiple indexes
 db.createIndexes([['author', 'name'], ['scripts', 'test']], cb)
+
+//create a compound index (index pairs of properties)
+db.createIndex([['name'], ['version']], cb)
+
+//create an index with a wildcard glob.
+//this matches all values inside keywords: [...]
+db.createIndex([['keywords', true]], cb)
+
+//NOTE, you cannot create compound indexes of two glob paths.
+//but a compound index with one glob path is okay.
 
 ```
 

@@ -26,6 +26,7 @@
     "level-test": "~1.6.6"
   },
   "scripts": {
+    "prepublish": "npm ls && npm test",
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://dominictarr.com)",

@@ -134,7 +134,7 @@ module.exports = function (_db) {
 
   db.pre(function (data, add) {
     db.indexes.forEach(function (path) {
-      util.starpath(path, data.value).forEach(function (value) {
+      util.glob(path, data.value).forEach(function (value) {
         add({
           key: [path, value, data.key],
           value: '', type: 'put', prefix: db.sublevel('idx')

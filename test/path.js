@@ -2,7 +2,6 @@
 var tape = require('tape')
 var util = require('../util')
 var path = util.path
-var star = util.starpath
 
 tape('match paths', function (t) {
 
@@ -23,45 +22,41 @@ tape('match paths', function (t) {
 })
 
 
-tape('match flat starpaths', function (t) {
+tape('match wildcardless globs', function (t) {
 
-  t.deepEqual(star(['foo'], {
+  t.deepEqual(util.glob(['foo'], {
     foo: 7
   }), [7])
 
-  t.deepEqual(star(['foo', 'bar'], {
+  t.deepEqual(util.glob(['foo', 'bar'], {
     foo: 7
   }), [undefined])
 
-  t.deepEqual(star(['foo', 'bar'], {
+  t.deepEqual(util.glob(['foo', 'bar'], {
     foo: {bar: 6}
   }), [6])
 
-  t.deepEqual(star(['foo'], {
+  t.deepEqual(util.glob(['foo'], {
     foo: 7
   }), [7])
 
-//  t.throws(function () {
-//    starpath('string')
-//  })
-//
   t.end()
 
 })
 
-tape('match star paths', function (t) {
+tape('match globs', function (t) {
 
 
-  t.deepEqual(star([true], {
+  t.deepEqual(util.glob([true], {
     foo: 1, bar: 2, baz: 3
   }), [1, 2, 3])
 
-  t.deepEqual(star(['level', true], {
+  t.deepEqual(util.glob(['level', true], {
     level: { foo: 1, bar: 2, baz: 3}
   }), [1, 2, 3])
 
 
-  t.deepEqual(star([true, 'level'], {
+  t.deepEqual(util.glob([true, 'level'], {
     foo: {level: 1}, bar: {level: 2}, baz: {level: 3}
   }), [1, 2, 3])
 
@@ -79,7 +74,7 @@ var obj = {
   this: {that: 'self'}
 }
 
-tape('iterate starpaths', function (t) {
+tape('iterate globs', function (t) {
 
 
   t.deepEqual(

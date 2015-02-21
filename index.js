@@ -97,14 +97,16 @@ module.exports = function (_db) {
       db.scan(),
       pull.drain(function (data) {
         maxTs = Math.max(data.ts, maxTs)
+
         paths.forEach(function (paths) {
           if(util.isString(paths[0])) paths = [paths]
-          var values = paths.map(function (path) {
-            return util.path(path, data.value)
-          })
-          if(!values.every(util.isUndef))
-            batch.push({
-              key: [paths, values, data.key], value: '', type: 'put'
+          util.eachpath(paths, data.value)
+            .forEach(function (values) {
+              if(!values.length) return
+              if(!values.every(util.isUndef))
+                batch.push({
+                  key: [paths, values, data.key], value: '', type: 'put'
+                })
             })
         })
       },
@@ -133,13 +135,17 @@ module.exports = function (_db) {
   //load the index table into memory...
 
   db.pre(function (data, add) {
-    db.indexes.forEach(function (path) {
-      util.glob(path, data.value).forEach(function (value) {
-        add({
-          key: [path, value, data.key],
-          value: '', type: 'put', prefix: db.sublevel('idx')
+    db.indexes.forEach(function (index) {
+      util.eachpath(index.path, data.value)
+        .forEach(function (values) {
+          if(!values.length) return
+          if(!values.every(util.isUndef)) {
+            add({
+              key: [index.path, values, data.key],
+              value: '', type: 'put', prefix: db.sublevel('idx')
+            })
+          }
         })
-      })
     })
   })
 

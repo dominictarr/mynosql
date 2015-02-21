@@ -9,6 +9,9 @@ var pull = require('pull-stream')
 var pfs  = require('pull-fs')
 var glob = require('pull-glob')
 
+var LO = null
+var HI = undefined
+
 var createHash = require('crypto').createHash
 
 function hash(o) {
@@ -19,6 +22,16 @@ function hash(o) {
 
 function compare (a, b) {
   return a < b ? -1 : a > b ? 1 : 0
+}
+
+var all = function (stream, cb) {
+  if('function' === typeof cb) return go(cb)
+
+  function go (cb) {
+    pull(stream, pull.collect(cb))
+  }
+
+  return go
 }
 
 //load all the dependencies into database.
@@ -43,9 +56,8 @@ var query = [{path: ['version'], lt: '1.0.0'}]
 
 tape('full scan', function (t) {
 
-  pull(
-    require('../query/scan')(db, query).exec(),
-    pull.collect(function (err, fullScanAry) {
+  all(require('../query/scan')(db, query).exec())
+    (function (err, fullScanAry) {
 
       fullScanAry.forEach(function (pkg) {
         t.ok(pkg.value.version < '1.0.0')
@@ -85,7 +97,6 @@ tape('full scan', function (t) {
       })
 
     })
-  )
 
 })
 
@@ -110,25 +121,56 @@ tape('compound indexes', function (t) {
       }),
       pull.drain(null, function (err) {
 
-        pull(
-          db.query([
-            {path: ['name'], eq: 'ltgt'},
-            {path: ['version'], gte: '2.0.0', lt: '3.0.0'}
-          ]),
-          pull.collect(function (err, ary) {
-            if(err) throw err
-            console.log(ary)
-            t.ok(ary.length >= 1)
-            ary.forEach(function (pkg) {
-              t.equal(pkg.value.name, 'ltgt')
-              t.ok(pkg.value.version >= '2.0.0')
-              t.ok(pkg.value.version < '3.0.0')
-            })
-            t.end()
+        all(db.query([
+          {path: ['name'], eq: 'ltgt'},
+          {path: ['version'], gte: '2.0.0', lt: '3.0.0'}
+        ])) (function (err, ary) {
+          if(err) throw err
+          console.log(ary)
+          t.ok(ary.length >= 1)
+          ary.forEach(function (pkg) {
+            t.equal(pkg.value.name, 'ltgt')
+            t.ok(pkg.value.version >= '2.0.0')
+            t.ok(pkg.value.version < '3.0.0')
           })
-        )
+          t.end()
+        })
       })
     )
   })
 
 })
+
+tape('glob query for keyword.*', function (t) {
+  var start = Date.now()
+  all(db.query([
+    {path: ['keywords', true], eq: 'database'}
+  ])) (function (err, ary) {
+    var p = ary.filter(function (pkg) {
+      return pkg.value.name === 'level'
+    }).shift()
+    t.equal(p.value.name, 'level')
+    var scantime = Date.now() - start
+    console.log('FULL SCAN TIME', scantime)
+    
+    db.createIndex([['keywords', true]], function (err) {
+      var start = Date.now()
+      all(pl.read(db.sublevel('idx'), {
+        values: false,
+        gte: [['keyword', true], LO],
+        lte: [['keyword', true], HI]
+      })) (function (err, ary) {
+        all(db.query([
+          {path: ['keywords', true], eq: 'database'}
+        ])) (function (err, ary) {
+          //check the index time is smaller than full scan time
+          //although both will be small since the database is tiny.
+          t.ok(Date.now() - start < scantime)
+          console.log('indexed query time', Date.now() - start)
+          t.end()
+        })
+      })
+    })
+  })
+})
+

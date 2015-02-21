@@ -82,8 +82,6 @@ tape('iterate globs', function (t) {
     [['self', 'example']]
   )
 
-
-
   t.deepEqual(
     util.eachpath([['foo', true, 'bar'], ['type']], obj),
     [
@@ -103,7 +101,53 @@ tape('iterate globs', function (t) {
     ]
   )
 
+  t.end()
+})
 
+var pkg = {
+  "name": "JSONStream",
+  "version": "1.0.0",
+  "description": "rawStream.pipe(JSONStream.parse()).pipe(streamOfObjects)",
+  "homepage": "http://github.com/dominictarr/JSONStream",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dominictarr/JSONStream.git"
+  },
+  "keywords": [
+    "json",
+    "stream",
+    "streaming",
+    "parser",
+    "async",
+    "parsing"
+  ],
+  "dependencies": {
+    "jsonparse": "0.0.5",
+    "through": ">=2.2.7 <3"
+  },
+  "devDependencies": {
+    "it-is": "~1",
+    "assertions": "~2.2.2",
+    "render": "~0.1.1",
+    "trees": "~0.0.3",
+    "event-stream": "~0.7.0",
+    "tape": "~2.12.3"
+  },
+  "bin": "./index.js",
+  "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
+  "scripts": {
+    "test": "set -e; for t in test/*.js; do echo '***' $t '***'; node $t; done"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
+
+tape('glob into array', function (t) {
+
+  console.log(util.eachpath([['keywords', true]], pkg))
 
   t.end()
+
 })

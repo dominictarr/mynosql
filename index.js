@@ -21,13 +21,9 @@ function find (ary, test) {
     if(test(ary[i], i, ary)) return ary[i]
 }
 
-function isUndef (u) {
-  return 'undefined' === typeof u
-}
-
 module.exports = function (_db) {
 
-  var db = sublevel(_db)
+  var db = _db.sublevel ? _db : sublevel(_db)
   var logDb = db.sublevel('log')
 
   // ************************************
@@ -106,7 +102,7 @@ module.exports = function (_db) {
           var values = paths.map(function (path) {
             return util.path(path, data.value)
           })
-          if(!values.every(isUndef))
+          if(!values.every(util.isUndef))
             batch.push({
               key: [paths, values, data.key], value: '', type: 'put'
             })
@@ -138,9 +134,11 @@ module.exports = function (_db) {
 
   db.pre(function (data, add) {
     db.indexes.forEach(function (path) {
-      add({
-        key: [path, pathTo(path, data.value), data.key],
-        value: '', type: 'put', prefix: db.sublevel('idx')
+      util.starpath(path, data.value).forEach(function (value) {
+        add({
+          key: [path, value, data.key],
+          value: '', type: 'put', prefix: db.sublevel('idx')
+        })
       })
     })
   })

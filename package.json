@@ -23,7 +23,8 @@
     "level": "~0.18.0",
     "JSONStream": "~0.10.0",
     "pull-fs": "~1.1.4",
-    "level-test": "~1.6.6"
+    "level-test": "~1.6.6",
+    "pull-glob": "~1.0.1"
   },
   "scripts": {
     "prepublish": "npm ls && npm test",

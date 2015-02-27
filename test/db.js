@@ -1,14 +1,19 @@
 
 var level = require('level-test')()
 var tape = require('tape')
+//var join = require('path').join
 
 var db = require('../')(level('test-mynosql', {encoding: 'json'}))
 var db2 = require('../')(level('test-mynosql2', {encoding: 'json'}))
 
 var pl   = require('pull-level')
 var pull = require('pull-stream')
+
+var pull = require('pull-stream')
 var pfs  = require('pull-fs')
 var glob = require('pull-glob')
+var pl   = require('pull-level')
+
 
 var LO = null
 var HI = undefined
@@ -39,17 +44,10 @@ var all = function (stream, cb) {
 
 tape('query dependency database', function (t) {
 
-  pull(
-    glob('**/package.json'),
-    pfs.readFile(JSON.parse),
-    pull.map(function (pkg) {
-      return {key: hash(pkg), value: pkg, type: 'put'}
-    }),
-    pl.write(db, function (err) {
-      if(err) throw err
-      t.end()
-    })
-  )
+  require('../example').init(db, null, function (err) {
+    if(err) throw err
+    t.end()
+  })
 
 })
 

@@ -24,7 +24,9 @@
     "JSONStream": "~0.10.0",
     "pull-fs": "~1.1.4",
     "level-test": "~1.6.6",
-    "pull-glob": "~1.0.1"
+    "pull-glob": "~1.0.1",
+    "pull-stringify": "~1.2.2",
+    "stream-to-pull-stream": "~1.6.1"
   },
   "scripts": {
     "prepublish": "npm ls && npm test",

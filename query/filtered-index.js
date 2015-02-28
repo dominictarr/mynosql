@@ -1,5 +1,6 @@
 'use strict'
 var util = require('../util')
+var ltgt = require('ltgt')
 
 var LO = null
 var HI = undefined
@@ -24,13 +25,13 @@ module.exports = function (db, query) {
   var opts
 
   if(q.eq)
-    opts = {gte: [[q.path], [q.eq], LO], lte: [[q.path], [q.eq], HI]}
+    opts = {index: [q.path], gte: [q.eq], lte: [q.eq]}
   else {
-    opts = {}
-    if(q.gte) opts.gte = [[q.path], [q.gte], LO]
-    if(q.gt)  opts.gt  = [[q.path], [q.gt],  LO]
-    if(q.lte) opts.lte = [[q.path], [q.lte], HI]
-    if(q.lt)  opts.lt  = [[q.path], [q.lt],  HI]
+    opts = ltgt.toLtgt(q, {}, function (value) { return [value] })
+//    if(q.gte) opts.gte = [q.gte]
+//    if(q.gt)  opts.gt  = [q.gt]
+//    if(q.lte) opts.lte = [q.lte]
+//    if(q.lt)  opts.lt  = [q.lt]
   }
 
   opts.values = false

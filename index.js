@@ -5,10 +5,14 @@ var pl        = require('pull-level')
 var paramap   = require('pull-paramap')
 var timestamp = require('monotonic-timestamp')
 var defer     = require('pull-defer')
+var ltgt      = require('ltgt')
 
 var cont      = require('cont')
 
 var util = require('./util')
+
+var LO = null
+var HI = undefined
 
 function addTo(aryTo, aryFrom) {
   aryFrom.forEach(function (e) { aryTo.push(e) })
@@ -170,6 +174,9 @@ module.exports = function (_db) {
   //with optional filtering...
 
   db.readIndex = function (opts, filter) {
+    opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
+      return [opts.index, value, isUpper ? HI : LO]
+    })
     return pull(
       pl.read(db.sublevel('idx'), opts),
       paramap(function (key, cb) {

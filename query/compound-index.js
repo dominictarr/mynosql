@@ -49,7 +49,7 @@ module.exports = function (db, query) {
 
     var l = index.path.length
 
-    var querypath = [], opts
+    var querypath = [], opts = {index: index.path, values: false}
 
     for(var i = 0; i < l; i++) {
       var last = i == l - 1
@@ -63,8 +63,8 @@ module.exports = function (db, query) {
       if(util.has(subquery, 'eq'))
         querypath[i] = subquery.eq
       else if(last)
-        opts = ltgt.toLtgt(subquery, {values: false}, function (e, hi) {
-          return [index.path, querypath.concat(e), hi ? HI : LO]
+        opts = ltgt.toLtgt(subquery, opts, function (e, hi) {
+          return querypath.concat(e)
         }, LO, HI)
       else
         return false //couldn't use this index.
@@ -72,11 +72,7 @@ module.exports = function (db, query) {
 
     //if the query didn't end in a range...
     if(!opts)
-      opts = {
-          values: false,
-          gte: [index.path, querypath, LO],
-          lte: [index.path, querypath, HI]
-        }
+      opts.gte = opts.lte = querypath
 
     return {
       opts: opts,

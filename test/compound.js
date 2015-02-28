@@ -21,10 +21,11 @@ tape('plan query with compound index', function (t) {
   ])
 
   t.deepEqual(plan.opts, {
+    index: [['name'], ['version']],
     gte:
-      [[['name'], ['version']], ['mynosql', '1.0.0'], LO],
+      ['mynosql', '1.0.0'],
     lt:
-      [[['name'], ['version']], ['mynosql', '2.0.0'], HI],
+      ['mynosql', '2.0.0'],
     values: false
   })
 

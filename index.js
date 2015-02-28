@@ -132,10 +132,12 @@ module.exports = function (_db) {
   // Querying!
   //
 
-  //load the index table into memory...
+  //preinsert, add to persitent indexes
 
   db.pre(function (data, add) {
     db.indexes.forEach(function (index) {
+      if(index.mem) return
+
       util.eachpath(index.path, data.value)
         .forEach(function (values) {
           if(!values.length) return
@@ -148,6 +150,24 @@ module.exports = function (_db) {
         })
     })
   })
+
+  //postinsert, add to memory indexes
+
+  db.post(function (data) {
+    db.indexes.forEach(function (index) {
+      if(!index.mem) return
+
+      util.eachpath(index.path, data.value)
+        .forEach(function (values) {
+          if(!values.length) return
+          if(!values.every(util.isUndef)) {
+            index.data.add([values, data.key])
+          }
+        })
+    })
+  })
+
+
 
   var init = util.createInit(function (cb) {
     pull(

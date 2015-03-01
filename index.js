@@ -6,6 +6,7 @@ var paramap   = require('pull-paramap')
 var timestamp = require('monotonic-timestamp')
 var defer     = require('pull-defer')
 var ltgt      = require('ltgt')
+var deepEqual = require('deep-equal')
 
 var cont      = require('cont')
 
@@ -89,6 +90,13 @@ module.exports = function (_db) {
   db.indexes = []
 
   db.createIndex = cont(function (path, cb) {
+
+    //TODO: persist memory indexes
+    if(util.find(db.indexes, function (index) {
+      return deepEqual(index.path, path)
+    })) return cb()//throw new Error('index already exists')
+
+
     return db.createIndexes([path], cb)
   })
 
@@ -194,14 +202,29 @@ module.exports = function (_db) {
   //with optional filtering...
 
   db.readIndex = function (opts, filter) {
-    opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
-      return [opts.index, value, isUpper ? HI : LO]
+    var index = util.find(db.indexes, function (index) {
+      return deepEqual(index.path, opts.index)
     })
+
+    var ki = index.mem ? 1 : 2
+
+    opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
+      var bound = isUpper ? HI : LO
+      return (
+        index.mem
+        ? [value, bound]
+        : [opts.index, value, bound]
+      )
+    })
+
     return pull(
-      pl.read(db.sublevel('idx'), opts),
+      index.mem
+      ? pull.values(index.data.range(opts))
+      : pl.read(db.sublevel('idx'), opts),
       paramap(function (key, cb) {
-        db.get(key[2], function (err, value) {
-          cb(null, {key: key[2], value: value})
+        var k = index.mem ? key[1] : key[2]
+        db.get(k, function (err, value) {
+          cb(null, {key: k, value: value})
         })
       }),
       filter ? pull.filter(function (data) {
@@ -210,18 +233,18 @@ module.exports = function (_db) {
     )
   }
 
-  db.plan = cont(function (query, cb) {
+  db.plan = cont(function (query, opts, cb) {
     if(!isArray(query)) query = [query]
     init(function () {
       cb(null, strategies.map(function (strategy) {
-        return strategy(db, query)
+        return strategy(db, query, opts)
       }))
     })
   })
 
-  db.query = function (query) {
+  db.query = function (query, opts) {
     var stream = defer.source()
-    db.plan(query, function (err, plans) {
+    db.plan(query, opts, function (err, plans) {
       stream.resolve(plans.filter(Boolean).shift().exec())
     })
     return stream

@@ -144,7 +144,7 @@ tape('glob query for keyword.*', function (t) {
   var start = Date.now()
   all(db.query([
     {path: ['keywords', true], eq: 'database'}
-  ])) (function (err, ary) {
+  ], {index: false})) (function (err, ary) {
     var p = ary.filter(function (pkg) {
       return pkg.value.name === 'level'
     }).shift()
@@ -199,3 +199,4 @@ tape('build glob index in realtime', function (t) {
     )
   })
 })
+

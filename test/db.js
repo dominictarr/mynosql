@@ -1,7 +1,6 @@
 
 var level = require('level-test')()
 var tape = require('tape')
-//var join = require('path').join
 
 var db = require('../')(level('test-mynosql', {encoding: 'json'}))
 var db2 = require('../')(level('test-mynosql2', {encoding: 'json'}))
@@ -10,21 +9,11 @@ var pl   = require('pull-level')
 var pull = require('pull-stream')
 
 var pull = require('pull-stream')
-var pfs  = require('pull-fs')
-var glob = require('pull-glob')
 var pl   = require('pull-level')
 
 
 var LO = null
 var HI = undefined
-
-var createHash = require('crypto').createHash
-
-function hash(o) {
-  return createHash('sha256')
-    .update(JSON.stringify(o))
-    .digest().slice(0, 20).toString('base64')
-}
 
 function compare (a, b) {
   return a < b ? -1 : a > b ? 1 : 0
@@ -159,8 +148,6 @@ tape('glob query for keyword.*', function (t) {
         lte: [[['keywords', true]], HI]
       })) (function (err, ary) {
         console.log('GLOB INDEX', ary.map(JSON.stringify))
-
-        return t.end()
 
         t.ok(ary.length)
         var start = Date.now()

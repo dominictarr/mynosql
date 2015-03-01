@@ -27,11 +27,7 @@ module.exports = function (db, query) {
   if(q.eq)
     opts = {index: [q.path], gte: [q.eq], lte: [q.eq]}
   else {
-    opts = ltgt.toLtgt(q, {}, function (value) { return [value] })
-//    if(q.gte) opts.gte = [q.gte]
-//    if(q.gt)  opts.gt  = [q.gt]
-//    if(q.lte) opts.lte = [q.lte]
-//    if(q.lt)  opts.lt  = [q.lt]
+    opts = ltgt.toLtgt(q, {index: [q.path]}, function (value) { return [value] })
   }
 
   opts.values = false

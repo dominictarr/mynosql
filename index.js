@@ -8,6 +8,8 @@ var defer     = require('pull-defer')
 var ltgt      = require('ltgt')
 var deepEqual = require('deep-equal')
 
+var Index     = require('./index/')
+
 var cont      = require('cont')
 
 var util = require('./util')
@@ -89,13 +91,16 @@ module.exports = function (_db) {
 
   db.indexes = []
 
+  db.getIndex = function (path) {
+    return util.find(db.indexes, function (index) {
+      return deepEqual(index.path, path)
+    })
+  }
+
   db.createIndex = cont(function (path, cb) {
 
     //TODO: persist memory indexes
-    if(util.find(db.indexes, function (index) {
-      return deepEqual(index.path, path)
-    })) return cb()//throw new Error('index already exists')
-
+    if(db.getIndex(path)) return cb()
 
     return db.createIndexes([path], cb)
   })
@@ -114,6 +119,7 @@ module.exports = function (_db) {
           if(util.isString(paths[0])) paths = [paths]
           util.eachpath(paths, data.value)
             .forEach(function (values) {
+              console.log(paths, values, data.key)
               if(!values.length) return
               if(!values.every(util.isUndef))
                 batch.push({
@@ -132,8 +138,27 @@ module.exports = function (_db) {
         db.sublevel('idx').batch(batch, function (err) {
           if(err) return cb(err)
           paths.forEach(function (path) {
-            db.indexes.push({path: path, since: maxTs})
+            var index
+            db.indexes.push(index = {
+              path: path,
+              since: maxTs,
+              read: function (opts) {
+                opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
+                  var bound = isUpper ? HI : LO
+                  return [path, value, bound]
+                })
+                console.log('READ INDEX', opts)
+                return pull(
+                  pl.read(db.sublevel('idx'), opts),
+                  pull.map(function (e) {
+                    console.log(e)
+                    return e[2]
+                  })
+                )
+              }
+            })
           })
+          console.error('created indexes:' + JSON.stringify(paths))
           cb()
         })
       })
@@ -202,29 +227,26 @@ module.exports = function (_db) {
   //with optional filtering...
 
   db.readIndex = function (opts, filter) {
-    var index = util.find(db.indexes, function (index) {
-      return deepEqual(index.path, opts.index)
-    })
+    var index = db.getIndex(opts.path || opts.index)
 
-    var ki = index.mem ? 1 : 2
-
-    opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
-      var bound = isUpper ? HI : LO
-      return (
-        index.mem
-        ? [value, bound]
-        : [opts.index, value, bound]
-      )
-    })
+    if(!index) throw new Error('no index for:' + JSON.stringify(opts.path || opts.index))
+  
+//    var ki = index.mem ? 1 : 2
+//
+//    opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
+//      var bound = isUpper ? HI : LO
+//      return (
+//        index.mem
+//        ? [value, bound]
+//        : [opts.index, value, bound]
+//      )
+//    })
 
     return pull(
-      index.mem
-      ? pull.values(index.data.range(opts))
-      : pl.read(db.sublevel('idx'), opts),
+      index.read(opts),
       paramap(function (key, cb) {
-        var k = index.mem ? key[1] : key[2]
-        db.get(k, function (err, value) {
-          cb(null, {key: k, value: value})
+        db.get(key, function (err, value) {
+          cb(null, {key: key, value: value})
         })
       }),
       filter ? pull.filter(function (data) {
@@ -235,6 +257,7 @@ module.exports = function (_db) {
 
   db.plan = cont(function (query, opts, cb) {
     if(!isArray(query)) query = [query]
+    console.log('PLAN', query, strategies)
     init(function () {
       cb(null, strategies.map(function (strategy) {
         return strategy(db, query, opts)
@@ -245,6 +268,7 @@ module.exports = function (_db) {
   db.query = function (query, opts) {
     var stream = defer.source()
     db.plan(query, opts, function (err, plans) {
+      console.log(plans)
       stream.resolve(plans.filter(Boolean).shift().exec())
     })
     return stream
@@ -252,3 +276,6 @@ module.exports = function (_db) {
 
   return db
 }
+
+if(!module.parent)
+  console.log('wtf?')

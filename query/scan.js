@@ -3,6 +3,9 @@ var util = require('../util')
 var pull = require('pull-stream')
 var BSS = require('binary-sorted-set')
 var deepEqual = require('deep-equal')
+var ltgt = require('ltgt')
+
+var LO = null, HI = undefined
 
 module.exports = function (db, query, opts) {
 
@@ -18,7 +21,23 @@ module.exports = function (db, query, opts) {
     //do not build an index if it already exists
     if(findIndex([q.path])) return
 
-    return {path: [q.path], since: 0, data: BSS(), mem: true}
+    var index
+    return index = {
+      path: [q.path],
+      since: 0,
+      data: BSS(),
+      mem: true,
+      read: function (opts) {
+        opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
+          var bound = isUpper ? HI : LO
+          return [value, bound]
+        })
+        return pull.values(
+          index.data.range(opts)
+          .map(function (key) { return key[1] })
+        )
+      }
+    }
   })
   .filter(Boolean)
 

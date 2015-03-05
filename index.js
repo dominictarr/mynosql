@@ -230,17 +230,6 @@ module.exports = function (_db) {
     var index = db.getIndex(opts.path || opts.index)
 
     if(!index) throw new Error('no index for:' + JSON.stringify(opts.path || opts.index))
-  
-//    var ki = index.mem ? 1 : 2
-//
-//    opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
-//      var bound = isUpper ? HI : LO
-//      return (
-//        index.mem
-//        ? [value, bound]
-//        : [opts.index, value, bound]
-//      )
-//    })
 
     return pull(
       index.read(opts),
@@ -257,7 +246,6 @@ module.exports = function (_db) {
 
   db.plan = cont(function (query, opts, cb) {
     if(!isArray(query)) query = [query]
-    console.log('PLAN', query, strategies)
     init(function () {
       cb(null, strategies.map(function (strategy) {
         return strategy(db, query, opts)
@@ -268,7 +256,6 @@ module.exports = function (_db) {
   db.query = function (query, opts) {
     var stream = defer.source()
     db.plan(query, opts, function (err, plans) {
-      console.log(plans)
       stream.resolve(plans.filter(Boolean).shift().exec())
     })
     return stream
@@ -276,6 +263,3 @@ module.exports = function (_db) {
 
   return db
 }
-
-if(!module.parent)
-  console.log('wtf?')

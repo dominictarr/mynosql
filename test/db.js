@@ -95,19 +95,23 @@ tape('compound indexes', function (t) {
   ])
 
   db.createIndex([['name'], ['version']], function (err) {
+    if(err) throw err
+
     pull(
       pl.read(db.sublevel('idx'), {
         values: false,
-        gte: [['name'], undefined],
-        lte: [['name'], null]
+        gte: [[['name'], null]],
+        lte: [[['name'], undefined]]
       }),
       pull.through(function (key) {
-        t.deepEqual(key[0], [[['name'], ['version']]])
-        t.ok(key[1].length, 2)
-        t.ok('string' === typeof key[2])
+        t.deepEqual(key[0], [['name'], ['version']])
+        t.equal(key[1].length, 2, 'key length is correct')
+        t.ok('string' === typeof key[2], 'key[2] is a string')
         console.log(JSON.stringify(key))
       }),
-      pull.drain(null, function (err) {
+      pull.collect(function (err, ary) {
+        console.log(ary)
+        t.ok(ary.length)
 
         all(db.query([
           {path: ['name'], eq: 'ltgt'},
@@ -115,11 +119,11 @@ tape('compound indexes', function (t) {
         ])) (function (err, ary) {
           if(err) throw err
           console.log(ary)
-          t.ok(ary.length >= 1)
+          t.ok(ary.length >= 1, 'found at least one module')
           ary.forEach(function (pkg) {
             t.equal(pkg.value.name, 'ltgt')
-            t.ok(pkg.value.version >= '2.0.0')
-            t.ok(pkg.value.version < '3.0.0')
+            t.ok(pkg.value.version >= '2.0.0', 'version >= 2.0.0')
+            t.ok(pkg.value.version < '3.0.0', 'version < 3.0.0')
           })
           t.end()
         })

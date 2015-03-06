@@ -1,6 +1,7 @@
 'use strict'
 var util = require('../util')
 var ltgt = require('ltgt')
+var deepEqual = require('deep-equal')
 
 var LO = null
 var HI = undefined
@@ -8,29 +9,30 @@ var HI = undefined
 module.exports = function (db, query) {
   //choose the most indexable parameter
   //use eq instead of a range.
-  var index = db.indexes.filter(function (e) {
-    if(!e) return
-    var str = ''+e.path
-    return util.find(query, function (q) {
-      return q.path == str
-    })
-  }).shift()
 
-  if(!index) return
+  var pair = query.map(function (q) {
+    return {index: db.getIndex([q.path]), querypath: q}
+  }).filter(function (e) { return e.index }).shift()
 
-  var q = util.find(query, function (e) {
-    return e.path == ''+index.path
-  })
+  if(!pair) return
+
+  var q = pair.querypath
+  var index = pair.index
 
   var opts
 
   if(q.eq)
     opts = {index: [q.path], gte: [q.eq], lte: [q.eq]}
   else {
-    opts = ltgt.toLtgt(q, {index: [q.path]}, function (value) { return [value] })
+    opts = ltgt.toLtgt(
+      q, {index: index.path},
+      function (value) { return [value] }
+    )
   }
 
   opts.values = false
+
+  util.assertDepth(opts.index, 'filteredIndex')
 
   return {
     opts: opts,

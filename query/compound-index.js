@@ -3,6 +3,7 @@ var LO = null
 var HI = undefined
 var util = require('../util')
 var ltgt = require('ltgt')
+var deepEqual = require('deep-equal')
 
 module.exports = function Compound (db, query) {
 

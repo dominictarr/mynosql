@@ -3,7 +3,6 @@ var LO = null
 var HI = undefined
 var util = require('../util')
 var ltgt = require('ltgt')
-var deepEqual = require('deep-equal')
 
 module.exports = function Compound (db, query) {
 
@@ -40,7 +39,6 @@ module.exports = function Compound (db, query) {
 
   //iterate over the indexes, and check if this index have > 1
 
-  console.log("TRY COMP INDEX", query)
   return util.first(db.indexes, function (index) {
 
     //don't bother if this index has more values than the query.
@@ -82,7 +80,6 @@ module.exports = function Compound (db, query) {
       compound: true,
       exec: function () {
         opts.index = index.path
-        console.log(opts)
         return db.readIndex(opts, util.createFilter(query))
       }
     }

@@ -118,7 +118,6 @@ module.exports = function (_db) {
           if(util.isString(paths[0])) paths = [paths]
           util.eachpath(paths, data.value)
             .forEach(function (values) {
-              console.log(paths, values, data.key)
               if(!values.length) return
               if(!values.every(util.isUndef))
                 batch.push({
@@ -146,18 +145,15 @@ module.exports = function (_db) {
                   var bound = isUpper ? HI : LO
                   return [path, value, bound]
                 })
-                console.log('READ INDEX', opts)
                 return pull(
                   pl.read(db.sublevel('idx'), opts),
                   pull.map(function (e) {
-                    console.log(e)
                     return e[2]
                   })
                 )
               }
             })
           })
-          console.error('created indexes:' + JSON.stringify(paths))
           cb()
         })
       })

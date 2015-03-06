@@ -17,7 +17,6 @@ module.exports = function (db, query, opts) {
   var enabled = !(opts && opts.index === false)
 
   //get indexes to be built.
-  console.log(query)
   var indexes = query.map(function (q) {
     return db.getIndex([q.path]) ? null : createMemIndex([q.path])
   }).filter(Boolean)

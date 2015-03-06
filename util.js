@@ -127,3 +127,20 @@ exports.createFilter = function (query) {
   }
 }
 
+//get the nesting depth (number of arrays inside arrays)
+exports.depth = function depth (ary) {
+  if(!isArray(ary)) return 0
+  return 1 + ary.reduce(function (M, a) {
+    return Math.max(M, depth(a))
+  }, 0)
+}
+
+exports.assertDepth = function (path, name) {
+  var d = exports.depth(path)
+  if(d !== 2)
+    throw new Error(
+      (name ? name + ': ' : '')
+    + 'depth of path:' + JSON.stringify(path) + ' was ' + d + '. '
+    + 'expected a path of depth 2 [[path,...], ...]'
+    )
+}

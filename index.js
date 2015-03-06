@@ -8,8 +8,6 @@ var defer     = require('pull-defer')
 var ltgt      = require('ltgt')
 var deepEqual = require('deep-equal')
 
-var Index     = require('./index/')
-
 var cont      = require('cont')
 
 var util = require('./util')
@@ -92,6 +90,7 @@ module.exports = function (_db) {
   db.indexes = []
 
   db.getIndex = function (path) {
+    util.assertDepth(path, 'getIndex')
     return util.find(db.indexes, function (index) {
       return deepEqual(index.path, path)
     })
@@ -192,15 +191,7 @@ module.exports = function (_db) {
 
   db.post(function (data) {
     db.indexes.forEach(function (index) {
-      if(!index.mem) return
-
-      util.eachpath(index.path, data.value)
-        .forEach(function (values) {
-          if(!values.length) return
-          if(!values.every(util.isUndef)) {
-            index.data.add([values, data.key])
-          }
-        })
+      if(index.post) index.post(data)
     })
   })
 

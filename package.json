@@ -16,7 +16,8 @@
     "cont": "~1.0.1",
     "ltgt": "~2.1.0",
     "deep-equal": "~0.2.2",
-    "binary-sorted-set": "~1.0.0"
+    "binary-sorted-set": "~1.0.0",
+    "intersect": "https://github.com/dominictarr/intersect.git"
   },
   "devDependencies": {
     "tape": "~3.5.0",

@@ -22,6 +22,7 @@ module.exports = function (path) {
       })
       return pull.values(
         table.range(opts)
+        .filter(util.createFilter(opts))
         .map(function (key) { return key[1] })
       )
     },

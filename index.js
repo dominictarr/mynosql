@@ -11,6 +11,7 @@ var deepEqual = require('deep-equal')
 var cont      = require('cont')
 
 var util = require('./util')
+var createDiskIndex = require('./indexes/disk')
 
 var LO = null
 var HI = undefined
@@ -109,21 +110,17 @@ module.exports = function (_db) {
 
     var batch = [], maxTs = 0
 
+    var indexes = paths.map(function (path) {
+      return createDiskIndex(db, path)
+    })
+
     pull(
       db.scan(),
       pull.drain(function (data) {
         maxTs = Math.max(data.ts, maxTs)
 
-        paths.forEach(function (paths) {
-          if(util.isString(paths[0])) paths = [paths]
-          util.eachpath(paths, data.value)
-            .forEach(function (values) {
-              if(!values.length) return
-              if(!values.every(util.isUndef))
-                batch.push({
-                  key: [paths, values, data.key], value: '', type: 'put'
-                })
-            })
+        indexes.forEach(function (index) {
+          index.pre(data).forEach(function (op) { batch.push(op) })
         })
       },
       function (err) {
@@ -135,24 +132,9 @@ module.exports = function (_db) {
         })
         db.sublevel('idx').batch(batch, function (err) {
           if(err) return cb(err)
-          paths.forEach(function (path) {
-            var index
-            db.indexes.push(index = {
-              path: path,
-              since: maxTs,
-              read: function (opts) {
-                opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
-                  var bound = isUpper ? HI : LO
-                  return [path, value, bound]
-                })
-                return pull(
-                  pl.read(db.sublevel('idx'), opts),
-                  pull.map(function (e) {
-                    return e[2]
-                  })
-                )
-              }
-            })
+          indexes.forEach(function (index) {
+            if(!db.getIndex(index.path))
+              db.indexes.push(index)
           })
           cb()
         })
@@ -168,18 +150,7 @@ module.exports = function (_db) {
 
   db.pre(function (data, add) {
     db.indexes.forEach(function (index) {
-      if(index.mem) return
-
-      util.eachpath(index.path, data.value)
-        .forEach(function (values) {
-          if(!values.length) return
-          if(!values.every(util.isUndef)) {
-            add({
-              key: [index.path, values, data.key],
-              value: '', type: 'put', prefix: db.sublevel('idx')
-            })
-          }
-        })
+      if(index.pre) index.pre(data).forEach(add)
     })
   })
 

@@ -177,6 +177,7 @@ module.exports = function (_db) {
 
   var strategies = [
     require('./query/compound-index'),
+    require('./query/intersection'),
     require('./query/filtered-index'),
     require('./query/scan')
   ]
@@ -207,7 +208,7 @@ module.exports = function (_db) {
     init(function () {
       cb(null, strategies.map(function (strategy) {
         return strategy(db, query, opts)
-      }))
+      }).filter(Boolean))
     })
   })
 
@@ -219,5 +220,16 @@ module.exports = function (_db) {
     return stream
   }
 
-  return db
-}
+  db.wipeIndexes = cont(function (cb) {
+    var batch = db.indexes.map(function (index) {
+      if(index.pre) //a persisted index
+        return {key: index.path, type: 'del'}
+    }).filter(Boolean)
+
+    db.sublevel('meta').batch(batch, function (err) {
+      db.indexes = [] //todo, delete indexes from disk!
+      cb()
+    })
+  })
+
+  return db}

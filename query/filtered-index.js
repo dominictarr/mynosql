@@ -10,33 +10,22 @@ module.exports = function (db, query) {
   //choose the most indexable parameter
   //use eq instead of a range.
 
-  var pair = query.map(function (q) {
-    return {index: db.getIndex([q.path]), querypath: q}
-  }).filter(function (e) { return e.index }).shift()
+  var opts = util.first(query, function (q) {
+    var index = db.getIndex([q.path])
+    if(!index) return
+    return util.toIndexable(q)
+  })
 
-  if(!pair) return
-
-  var q = pair.querypath
-  var index = pair.index
-
-  var opts
-
-  if(q.eq)
-    opts = {index: [q.path], gte: [q.eq], lte: [q.eq]}
-  else {
-    opts = ltgt.toLtgt(
-      q, {index: index.path},
-      function (value) { return [value] }
-    )
-  }
+  if(!opts) return
 
   opts.values = false
 
-  util.assertDepth(opts.index, 'filteredIndex')
+  util.assertDepth(opts.path, 'filteredIndex')
 
   return {
     opts: opts,
     query: query,
+    name: 'filtered',
     exec: function () {
       return db.readIndex(opts, util.createFilter(query))
     }

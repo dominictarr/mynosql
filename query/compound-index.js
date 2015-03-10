@@ -79,6 +79,7 @@ module.exports = function Compound (db, query) {
       opts: opts,
       index: index,
       compound: true,
+      name: 'compound',
       exec: function () {
         opts.index = index.path
         return db.readIndex(opts, util.createFilter(query))

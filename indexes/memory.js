@@ -15,6 +15,7 @@ module.exports = function (path) {
     path: path,
     since: 0,
     mem: true,
+    table: table,
     read: function (opts) {
       opts = ltgt.toLtgt(opts, opts, function (value, isUpper) {
         var bound = isUpper ? HI : LO
@@ -22,7 +23,6 @@ module.exports = function (path) {
       })
       return pull.values(
         table.range(opts)
-        .filter(util.createFilter(opts))
         .map(function (key) { return key[1] })
       )
     },

@@ -1,4 +1,6 @@
 'use strict'
+var ltgt = require('ltgt')
+
 var has = exports.has = function (obj, prop) {
   return Object.hasOwnProperty.call(obj, prop)
 }
@@ -143,4 +145,26 @@ exports.assertDepth = function (path, name) {
     + 'depth of path:' + JSON.stringify(path) + ' was ' + d + '. '
     + 'expected a path of depth 2 [[path,...], ...]'
     )
+}
+
+var hasRange = function (opts) {
+  return (
+    has(opts, 'lt') ||
+    has(opts, 'gt') ||
+    has(opts, 'lte') ||
+    has(opts, 'gte')
+  )
+}
+
+exports.toIndexable = function (subq) {
+  var opts
+  if(has(subq, 'eq'))
+    opts = {path: [subq.path], gte: [subq.eq], lte: [subq.eq]}
+  else if(hasRange(subq)){
+    opts = ltgt.toLtgt(
+      subq, {path: [subq.path]},
+      function (value) { return [value] }
+    )
+  }
+  return opts
 }

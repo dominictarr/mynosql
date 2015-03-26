@@ -15,7 +15,6 @@ module.exports = function (db, query, opts) {
 
   // check whether we have matching indexes for this query.
   var indexable = query.map(util.toIndexable).filter(Boolean)
-  console.log('intersection', indexable)
 
   if(indexable.length <= 1) return
 

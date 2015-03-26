@@ -51,6 +51,8 @@ module.exports = function (_db) {
       pl.read(logDb),
       //filter by unique is a hack. would rather make sure
       //that things where not added twice...
+      //TODO: enable/disable? this with an option if records
+      //can never be updated.
       pull.unique('value'),
       paramap(function (data, cb) {
         db.get(data.value, function (err, value) {

@@ -11,6 +11,10 @@ Queries are specified via a simple AND format with
 Currently, indexes must be created manually, although clever
 automatic indexing should be possible.
 
+mynosql adds `log` and `meta` and `idx` sublevels containing an
+index by insertion time (log) metadata about created indexes (meta)
+and the actual indexes (idx)
+
 ## Example
 
 Pass a new leveldb instance to mynosql.

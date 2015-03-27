@@ -21,9 +21,10 @@ tape('realtime queries', function (t) {
   }
 
   pull(
-    db.query([
-      {path: ['random'], gt: 0.7}
-    ], {
+    db.query({
+      query: [
+        {path: ['random'], gt: 0.7}
+      ],
       live: true, sync: true
     }),
     pull.drain(function (data) {

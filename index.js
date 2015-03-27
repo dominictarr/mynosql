@@ -215,6 +215,10 @@ module.exports = function (_db) {
   })
 
   db.query = function (query, opts) {
+    if(!isArray(query)) {
+      opts = query
+      query = opts.query
+    }
     var stream = defer.source()
     db.plan(query, opts, function (err, plans) {
       stream.resolve(plans.filter(Boolean).shift().exec())

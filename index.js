@@ -7,7 +7,7 @@ var timestamp = require('monotonic-timestamp')
 var defer     = require('pull-defer')
 var ltgt      = require('ltgt')
 var deepEqual = require('deep-equal')
-
+var cat       = require('pull-cat')
 var cont      = require('cont')
 
 var util = require('./util')
@@ -219,7 +219,18 @@ module.exports = function (_db) {
     db.plan(query, opts, function (err, plans) {
       stream.resolve(plans.filter(Boolean).shift().exec())
     })
-    return stream
+
+    if(!opts.live) return stream
+
+    var filter = util.createFilter(query)
+
+    return cat([
+      stream,
+      opts.sync ? pull.values([{sync: true}]) : null,
+      pull(pl.live(db), pull.filter(function (data) {
+        return filter(data.value)
+      }))
+    ])
   }
 
   db.wipeIndexes = cont(function (cb) {

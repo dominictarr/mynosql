@@ -220,7 +220,7 @@ module.exports = function (_db) {
       stream.resolve(plans.filter(Boolean).shift().exec())
     })
 
-    if(!opts.live) return stream
+    if(!opts || !opts.live) return stream
 
     var filter = util.createFilter(query)
 

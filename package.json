@@ -17,7 +17,8 @@
     "ltgt": "~2.1.0",
     "deep-equal": "~0.2.2",
     "binary-sorted-set": "~1.0.0",
-    "intersect": "~1.0.1"
+    "intersect": "~1.0.1",
+    "pull-cat": "~1.1.5"
   },
   "devDependencies": {
     "tape": "~3.5.0",

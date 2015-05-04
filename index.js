@@ -170,9 +170,7 @@ module.exports = function (_db) {
     pull(
       pl.read(db.sublevel('meta')),
       pull.drain(function (op) {
-        db.indexes.push({
-          path: op.key, since: op.since
-        })
+        db.indexes.push(createDiskIndex(db, op.key))
       }, cb)
     )
   })
@@ -249,4 +247,6 @@ module.exports = function (_db) {
     })
   })
 
-  return db}
+  return db
+}
+

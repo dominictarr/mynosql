@@ -1,5 +1,4 @@
 'use strict'
-var sublevel  = require('level-sublevel/bytewise')
 var pull      = require('pull-stream')
 var pl        = require('pull-level')
 var paramap   = require('pull-paramap')
@@ -29,7 +28,7 @@ function find (ary, test) {
 
 module.exports = function (_db) {
 
-  var db = _db.sublevel ? _db : sublevel(_db)
+  var db = _db.sublevel ? _db : require('level-sublevel/bytewise')(_db)
   var logDb = db.sublevel('log')
 
   // ************************************
